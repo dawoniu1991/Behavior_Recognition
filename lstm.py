@@ -38,9 +38,9 @@ class Config(object):
 
     def __init__(self, X_train, X_test):
         # 输入数据
-        self.train_count = len(X_train)  # 7352 training series
-        self.test_data_count = len(X_test)  # 2947 testing series
-        self.n_steps = len(X_train[0])  # 128 time_steps per series
+        self.train_count = len(X_train)  # 7352 训练数据
+        self.test_data_count = len(X_test)  # 2947 测试数据
+        self.n_steps = len(X_train[0])  # 128 序列步长
 
         # 训练超参数
         self.learning_rate = 0.0025
@@ -49,9 +49,9 @@ class Config(object):
         self.batch_size = 1500
 
         # LSTM 网络结构参数
-        self.n_inputs = len(X_train[0][0])  # Features count is of 9: 3 * 3D sensors features over time
-        self.n_hidden = 32  # nb of neurons inside the neural network
-        self.n_classes = 6  # Final output classes
+        self.n_inputs = len(X_train[0][0])  # 一个输出步长中，每个元素序列长度，为9。 训练集维度（7352,128,9）
+        self.n_hidden = 32  # 隐层神经元个数
+        self.n_classes = 6  # 最终输出种类
         self.W = {
             'hidden': tf.Variable(tf.random_normal([self.n_inputs, self.n_hidden])),
             'output': tf.Variable(tf.random_normal([self.n_hidden, self.n_classes]))
@@ -73,6 +73,8 @@ def LSTM_Network(_X, config):
     lstm_cell_2 = tf.contrib.rnn.BasicLSTMCell(config.n_hidden, forget_bias=1.0, state_is_tuple=True)
     lstm_cells = tf.contrib.rnn.MultiRNNCell([lstm_cell_1, lstm_cell_2], state_is_tuple=True)
     # LSTM结构输出
+    #tensorflow dynamic_rnn与static_rnn使用有所不同，输入输出格式不同，详情可参考下面微博
+    # https://blog.csdn.net/daxiaofan/article/details/70197812
     outputs, states = tf.contrib.rnn.static_rnn(lstm_cells, _X, dtype=tf.float32)
     print (np.array(outputs).shape)
     lstm_last_output = outputs[-1]
@@ -82,9 +84,7 @@ def LSTM_Network(_X, config):
 
 
 def one_hot(y_):
-#蒋类别编号进行one_hot编码
-
-
+#把类别编号进行one_hot编码
 #例如：[[5], [0], [3]] --> [[0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0]]
 
     y_ = y_.reshape(len(y_))
@@ -93,9 +93,6 @@ def one_hot(y_):
 
 
 if __name__ == "__main__":
-
-
-
     # 每个输入的九种特征
     INPUT_SIGNAL_TYPES = [
         "body_acc_x_",
